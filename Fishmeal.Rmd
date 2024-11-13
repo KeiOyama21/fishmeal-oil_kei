@@ -1,0 +1,641 @@
+---
+title: "Fishmeal"
+author: "Kei Oyama"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+#.libPaths("/Library/Frameworks/R.framework/Versions/4.2-arm64/Resources/library")
+#.libPaths("/Library/Frameworks/R.framework/Versions/4.2/Resources/library")
+```
+
+
+```{r}
+librarian::lib_startup(dplyr, tidyverse, googlesheets4, googledrive, hrbrthemes)
+
+# 現在のトークンをクリアして再認証
+gs4_deauth()  # 認証解除
+gs4_auth()    # 再認証
+
+```
+
+```{r}
+#metadata <- drive_get(path ="FFdata/FFtidy")
+											
+#metadata
+
+fishmeal <- read_sheet("https://docs.google.com/spreadsheets/d/1Gav4UQTBB5-lPCw3baw6yXxAFzMGxD_ym0DpftY-rJA/edit?gid=732318802#gid=732318802", sheet = 3)
+Round <- read_sheet("https://docs.google.com/spreadsheets/d/1Gav4UQTBB5-lPCw3baw6yXxAFzMGxD_ym0DpftY-rJA/edit?gid=732318802#gid=732318802",sheet = 6)
+```
+
+
+# 魚粉の全国の生産量の年推移を見るために合計を抽出
+```{r}
+
+fishmeal.na <- dplyr::filter(fishmeal, prefecture_en == "Total")
+
+```
+
+# 魚粉の全国の生産量の年推移をプロット
+```{r}
+
+library(ggplot2)
+library(hrbrthemes)
+
+# プロット作成
+ggplot(fishmeal.na, aes(x = year, y = volume_1000t)) +  # ここで y 軸を修正
+  geom_line(color = "blue", linewidth = 1) +  # 'size' を 'linewidth' に変更
+  theme_ipsum() +  # hrbrthemes のテーマを適用
+  labs(
+    x = "年",   # x軸のラベル
+    y = "生産量(1000t)",  # y軸のラベル
+    title = "魚粉生産量の年変化",  # タイトル
+  ) +
+  scale_y_continuous(labels = scales::comma) +  # y軸をカンマ区切りで表示
+  theme(
+    text = element_text(family = "HiraKakuPro-W3"),  # 日本語フォントの設定
+    plot.title = element_text(size = 16, face = "bold"),  # タイトルのスタイル
+    plot.subtitle = element_text(size = 12)  # サブタイトルのスタイル
+  )
+
+```
+
+
+```{r}
+
+# プロット作成
+ggplot(fishmeal.na, aes(x = year, y = volume_1000t)) +
+  geom_line(color = "#1f77b4", linewidth = 1.5) +  # 線の色と太さを調整
+  geom_point(color = "#e63946", size = 3, shape = 21, fill = "white") +  # 各データポイントを強調
+  theme_ipsum() +  # hrbrthemes のテーマを適用
+  labs(
+    x = "年", 
+    y = "魚粉生産量 (1000トン)",  
+    title = "魚粉生産量の年変化"  
+  ) +
+  scale_y_continuous(labels = scales::comma) +  # y軸をカンマ区切りで表示
+  theme(
+    text = element_text(family = "HiraKakuPro-W3"),  # 日本語フォントの設定
+    plot.title = element_text(size = 18, face = "bold", color = "#333333"),  # タイトルのスタイル
+    plot.subtitle = element_text(size = 14, color = "#666666"),  # サブタイトルのスタイル
+    axis.title = element_text(size = 12, face = "bold", color = "#333333"),  # 軸タイトルのスタイル
+    axis.text = element_text(size = 10, color = "#333333"),  # 軸ラベルのスタイル
+    panel.grid.major = element_line(color = "#e0e0e0", size = 0.5),  # メジャーグリッド線の色と太さ
+    panel.grid.minor = element_line(color = "#f0f0f0", size = 0.25),  # マイナーグリッド線の色と太さ
+    panel.background = element_rect(fill = "#f9f9f9"),  # 背景色を淡いグレーに設定
+    plot.background = element_rect(fill = "#ffffff")  # プロットの背景を白に設定
+  )
+
+
+```
+
+```{r}
+
+
+# プロット作成（棒グラフ）
+ggplot(fishmeal.na, aes(x = year, y = volume_1000t)) +
+  geom_bar(stat = "identity", fill = "#1f77b4", color = "#1f77b4", width = 0.7) +  # 棒の色と幅を設定
+  theme_ipsum() +  # hrbrthemes のテーマを適用
+  labs(
+    x = "年",  # x軸のラベル
+    y = "生産量(1000トン)",  # y軸のラベル
+    title = "魚粉生産量の年変化",  # タイトル
+  ) +
+  scale_y_continuous(labels = scales::comma) +  # y軸をカンマ区切りで表示
+  theme(
+    text = element_text(family = "HiraKakuPro-W3"),  # 日本語フォントの設定
+    plot.title = element_text(size = 18, face = "bold", color = "#333333"),  # タイトルのスタイル
+    plot.subtitle = element_text(size = 14, color = "#666666"),  # サブタイトルのスタイル
+    axis.title = element_text(size = 12, face = "bold", color = "#333333"),  # 軸タイトルのスタイル
+    axis.text = element_text(size = 10, color = "#333333"),  # 軸ラベルのスタイル
+    panel.grid.major = element_line(color = "#e0e0e0", size = 0.5),  # メジャーグリッド線の色と太さ
+    panel.grid.minor = element_line(color = "#f0f0f0", size = 0.25),  # マイナーグリッド線の色と太さ
+    panel.background = element_rect(fill = "#f9f9f9"),  # 背景色を淡いグレーに設定
+    plot.background = element_rect(fill = "#ffffff")  # プロットの背景を白に設定
+  )
+
+```
+
+# 都道府県ごとの魚粉生産量の年推移を見るために生産量上位10位を算出する
+```{r}
+library(dplyr)
+
+# まず、'合計' を除外
+df_filtered <- fishmeal %>%
+  filter(prefecture_ja != "合計") %>%
+
+  # 県ごとに年ごとの volume を合計
+  group_by(prefecture_ja) %>%
+  summarise(total_volume = sum(volume_1000t)) %>%
+
+  # 上位10県を抽出（total_volume の降順）
+  arrange(desc(total_volume)) %>%
+  slice_head(n = 10) %>%
+
+  # 上位10県名を取得
+  pull(prefecture_ja)
+
+# 元のデータから上位10県のみを抽出
+df_top10 <- fishmeal %>%
+  filter(prefecture_ja %in% df_filtered)  # 上位10県のデータのみ
+
+# 結果の確認
+df_top10
+
+```
+
+
+
+
+
+# 都道府県ごとの魚粉生産量の年推移をプロット
+```{r}
+library(ggplot2)
+library(hrbrthemes)
+
+# プロット作成
+ggplot(df_top10, aes(x = year, y = volume_1000t, color = prefecture_ja)) +
+  geom_line(linewidth = 1) +  # 'size' を 'linewidth' に変更
+  theme_ipsum() +  # hrbrthemes のテーマを適用
+  labs(
+    x = "年",   # x軸のラベル
+    y = "魚粉生産量の年変化",  # y軸のラベル
+    title = "県単位での魚粉生産量の年変化", 
+    color = "都道府県"
+  ) +
+  scale_y_continuous(labels = scales::comma) +  # y軸をカンマ区切りで表示
+  theme(
+    text = element_text(family = "HiraKakuPro-W3"),  # 日本語フォントの設定
+    plot.title = element_text(size = 16, face = "bold"),  # タイトルのスタイル
+    plot.subtitle = element_text(size = 12)  # サブタイトルのスタイル
+  )
+
+```
+
+
+
+# 全国の魚油・魚粉原料処理量中のラウンドと残滓の処理量を見るために合計を抽出
+```{r}
+# fishmeal.na <- dplyr::filter(fishmeal, prefecture_en == "Total")
+
+round.na <- dplyr::filter(Round, prefecture_en == "Total")
+
+str(round.na)
+```
+
+# 全国の魚油・魚粉原料処理量中のラウンドと残滓の処理量をプロット
+```{r}
+
+ggplot(round.na, aes(x= year, y=volume_1000t ,color= category)) +
+	theme_ipsum() +
+	geom_line() +
+	labs(color="区分",x = "年", y="1000トン") +
+  ggtitle("全国の魚油・魚粉原料処理") +
+	#ggtitle("Yearly Change of The Amount of Rounds and Residue \nin Processing of Fish-oil and Fish Meal (Nationwide)") +
+	theme(text = element_text(family = "HiraKakuPro-W3")) 
+
+
+```
+
+
+
+# 都道府県別の魚油・魚粉原料処理量中のラウンドと残滓の処理量をプロット
+```{r}
+# 'Total' を除外し、ラウンドのみをフィルタリング
+round_top10 <- Round %>%
+  filter(prefecture_ja != "合計", category == "ラウンド") %>%
+  
+  # 県ごとに年ごとの volume を合計
+  group_by(prefecture_ja) %>%
+  summarise(total_round = sum(volume_1000t, na.rm = TRUE)) %>%
+  
+  # 上位10県を抽出（total_round の降順）
+  arrange(desc(total_round)) %>%
+  slice_head(n = 10) %>%
+  
+  # 上位10県名を取得
+  pull(prefecture_ja)
+
+# 元のデータから上位10県のみを抽出
+df_round_top10 <- Round %>%
+  filter(prefecture_ja %in% round_top10, category == "ラウンド")  # 上位10県のデータのみ
+
+```
+
+```{r}
+plot_round_beautiful_1 <- df_round_top10 %>% 
+  ggplot(aes(x=year, y=volume_1000t, fill=prefecture_ja)) +
+  theme_minimal() +
+  geom_bar(stat = "identity") +
+  scale_fill_manual(values = c("#FFBF00", # yellow
+                              "#00A6FF", # blue
+                              "#FF6B6B", # red
+                              "#34DB60", # green
+                              "#D0B7DC", # purple
+                              "#996600", # brown
+                              "#00CCCC", # teal
+                              "#FF99CC", # pink
+                              "#6666FF", # indigo
+                              "#CCCC00")) + # olive
+  labs(fill="都道府県", x = "年" , y="1000トン") +
+  ggtitle("魚油・魚粉原料処理量(ラウンド)の年推移") +
+  theme(text = element_text(family = "HiraKakuPro-W3"))
+
+print(plot_round_beautiful_1)
+```
+
+```{r}
+plot_round_beautiful_2 <- df_round_top10 %>% 
+  ggplot(aes(x=year, y=volume_1000t, fill=prefecture_ja)) +
+  theme_minimal() +
+  geom_bar(stat = "identity") +
+  scale_fill_manual(values = c(
+    "#F6AA00", # 鮮やかな黄みの橙
+    "#4DC4FF", # シアン色
+    "#FF4B00", # 鮮やかな黄みの赤
+    "#005AFF", # 鮮やかな青
+    "#03AF7A", # 重厚な青みの緑
+    "#FFF100", # 鮮やかな黄
+    "#990099", # 奥深い紫色
+    "#84919E", # グレー
+    "#000000", # 漆黒の黒色
+    "#B35B28"  # 深みのある茶色
+  )) +
+  labs(fill = "都道府県", x = "年" ,y = "1000トン") +
+  ggtitle("魚油・魚粉原料処理量(ラウンド)の年推移") +
+  theme(text = element_text(family = "HiraKakuPro-W3"))
+
+print(plot_round_beautiful_2)
+
+```
+
+
+```{r}
+plot_round_beautiful_3 <- df_round_top10 %>% 
+  ggplot(aes(x=year, y=volume_1000t, fill=prefecture_ja)) +
+  theme_minimal() +
+  geom_bar(stat = "identity") +
+  scale_fill_manual(values = c(
+    "#F6AA00", # 鮮やかな黄みの橙
+    "#03AF7A", # 鮮やかな青
+    "#4DC4FF", # シアン色
+    "#FF4B00", # 鮮やかな黄みの赤
+    "#005AFF", # 重厚な青みの緑
+    "#FFF100", # 鮮やかな黄
+    "#990099", # 奥深い紫色
+    "#84919E", # グレー
+    "#000000", # 漆黒の黒色
+    "#B35B28"  # 深みのある茶色
+  )) +
+  labs(fill = "都道府県", x = "年", y = "ラウンド(1000トン)") +
+  ggtitle("魚油・魚粉原料処理量(ラウンド)の年推移") +
+  theme(text = element_text(family = "HiraKakuPro-W3"))
+
+print(plot_round_beautiful_3)
+
+```
+
+```{r}
+plot_round <- df_round_top10 %>% 
+　ggplot(aes(x=year, y=volume_1000t, fill=prefecture_ja)) +
+	theme_ipsum() +
+	geom_bar(stat = "identity") +
+	scale_fill_viridis(discrete=TRUE,option="turbo") + 
+	labs(fill="都道府県",x = "年",  y="ラウンド(1000トン)") +
+	ggtitle("魚油・魚粉原料処理量(ラウンド)の年推移") + 
+	theme(text = element_text(family = "HiraKakuPro-W3"))
+
+print(plot_round)
+  
+```
+
+
+
+#round上位10県のresidue
+```{r}
+library(viridis)
+
+df_residue_round_top10 <- Round %>%
+  filter(prefecture_ja %in% round_top10, category == "残滓")
+
+plot_residue_round <- df_residue_round_top10  %>% 
+ggplot(aes(x=year, y=volume_1000t, fill=prefecture_ja)) +
+	theme_ipsum() +
+	geom_bar(stat = "identity") +
+	scale_fill_viridis(discrete=TRUE,option="turbo") + 
+	labs(fill="都道府県", x = "年", y="残滓(1000トン)") +
+	ggtitle("魚油・魚粉原料処理量(残滓)の年推移") + 
+	theme(text = element_text(family = "HiraKakuPro-W3"))
+
+print(plot_residue_round)
+```
+
+
+```{r}
+library(patchwork)
+
+
+ plot_round / plot_residue_round +
+ plot_layout(guides = "collect", width = 1)　
+```
+
+
+
+#残滓の上位１０県
+```{r}
+# 'Total' を除外し、残滓のみをフィルタリング
+residue_top10 <- Round %>%
+  filter(prefecture_ja != "合計", category == "残滓") %>%
+  
+  # 県ごとに年ごとの volume を合計
+  group_by(prefecture_ja) %>%
+  summarise(total_residue = sum(volume_1000t, na.rm = TRUE)) %>%
+  
+  # 上位10県を抽出（total_residue の降順）
+  arrange(desc(total_residue)) %>%
+  slice_head(n = 10) %>%
+  
+  # 上位10県名を取得
+  pull(prefecture_ja)
+
+# 元のデータから上位10県のみを抽出
+df_residue_top10 <- Round %>%
+  filter(prefecture_ja %in% residue_top10, category == "残滓")  # 上位10県のデータのみ
+
+df_residue_top10 %>% 
+ggplot(aes(x=year, y=volume_1000t, fill=prefecture_ja)) +
+	theme_ipsum() +
+	geom_bar(stat = "identity") +
+	scale_fill_viridis(discrete=TRUE,option="turbo") + 
+	labs(fill="Prefecture", y="tones *1000") +
+	ggtitle("魚油・魚粉加工残渣量の年次推移（都道府県別）") + 
+	theme(text = element_text(family = "HiraKakuPro-W3")) 
+
+#library(patchwork)
+
+# 
+# plot_round + plot_residue +
+#  plot_layout(guides = "collect", width = 1)　
+
+```
+
+
+
+
+# 全国の魚油・魚粉原料処理量中のラウンドと残滓の割合を見るために合計を抽出
+```{r}
+#ラウンドの合計をまとめたround_total 、それに対応する残滓residue_total 
+round_total <- Round %>% filter(prefecture_ja == "合計", category == "ラウンド")
+residue_total <- Round %>% filter(prefecture_ja == "合計", category == "残滓")
+
+percent_total <- round_total$volume_1000t / (round_total$volume_1000t + residue_total$volume_1000t)
+print(percent_total)
+
+
+#ラウンドの割合と年のデータフレーム作成
+df_percent_total <- data.frame(
+  year = c(1999 : 2023),
+  percent = percent_total
+)
+
+# 必要なパッケージを読み込み
+library(ggplot2)
+library(hrbrthemes) # テーマを美しく整えるためのパッケージ
+
+plot_percent <- df_percent_total %>% 
+  ggplot(aes(x = year, y = percent * 100)) +
+  geom_bar(stat = "identity", fill = "skyblue") + 
+  labs(x = "年", y = "ラウンドの割合", title = "ラウンドの割合の年変化") +
+  scale_y_continuous(labels = scales::percent_format(scale = 1)) +
+  theme(
+    plot.title = element_text(size = 16, face = "bold"),
+    plot.subtitle = element_text(size = 12),
+    text = element_text(family = "HiraKakuPro-W3")
+  )
+
+print(plot_percent)
+
+  
+
+
+
+
+```
+
+```{r}
+p_zenkoku <- dplyr::filter(Round, prefecture_ja == "合計") %>% group_by(year)
+p_zenkoku$year <- as.factor(p_zenkoku$year)
+
+ggplot(p_zenkoku,aes(x=year, y=volume_1000t,fill=category)) +
+	theme_ipsum() +
+	geom_bar(stat = "identity",position = "fill") +
+	labs(x = "年", y = "割合 (%)", title = "ラウンドと残滓の割合の年推移") +
+	scale_y_continuous(labels = scales::percent) +
+	scale_x_discrete(breaks = seq(2000,2023,by=5)) +
+	theme(text = element_text(family = "HiraKakuPro-W3")) 
+
+```
+
+
+
+#ラウンドが多い都道府県を抽出
+```{r}
+percent_top10 <- df_residue_top10$volume_1000t/(df_round_top10$volume_1000t + df_residue_round_top10$volume_1000)
+print(round_top10)
+
+# 北海道　青森　宮城　鹿児島　鳥取　岩手
+```
+
+
+
+
+
+
+# 都道府県別のラウンドの処理量の割合
+```{r}
+
+p1 <- dplyr::filter(Round, category=="ラウンド") %>% filter(prefecture_ja !="合計")
+
+p1$year <- as.factor(p1$year)
+
+
+percent_per_prefecture<- p1 %>% group_by(year) %>% mutate(percentage = volume_1000t/sum(volume_1000t)) %>% ungroup() %>% mutate(pre_modi = ifelse(prefecture_ja %in% c("北海道","埼玉県","静岡県","宮城県","鹿児島県","千葉県","山口県","青森県","大阪府","長崎県"), prefecture_ja, "その他"))
+
+ggplot(percent_per_prefecture, aes(x=year, y=percentage, fill=pre_modi)) +
+			 	theme_ipsum() +
+        labs(x = "年", y = "ラウンドの割合 (%)", title = "ラウンドの割合の年変化") +                
+			 	geom_bar(stat = "identity") +
+			 	scale_y_continuous(labels = scales::percent) +
+        scale_x_discrete(breaks = seq(2000,2020,by=5)) +
+			 	theme(text = element_text(family = "HiraKakuPro-W3"))
+
+```
+
+# 都道府県別の残滓の処理量の割合
+```{r}
+
+p2 <- dplyr::filter(Round, category=="残滓") %>% filter(prefecture_ja !="合計")
+
+p2$year <- as.factor(p2$year)
+
+
+percent_per_prefecture<- p2 %>% group_by(year) %>% mutate(percentage = volume_1000t/sum(volume_1000t)) %>% ungroup() %>% mutate(pre_modi = ifelse(prefecture_ja %in% c("北海道","埼玉県","静岡県","宮城県","鹿児島県","千葉県","山口県","青森県","大阪府","長崎県"), prefecture_ja, "その他"))
+
+ggplot(percent_per_prefecture, aes(x=year, y=percentage, fill=pre_modi)) +
+			 	theme_ipsum() +
+        labs(x = "年", y = "残滓の割合 (%)", title = "残滓の割合の年変化") +                
+			 	geom_bar(stat = "identity") +
+			 	scale_y_continuous(labels = scales::percent) +
+        scale_x_discrete(breaks = seq(2000,2020,by=5)) +
+			 	theme(text = element_text(family = "HiraKakuPro-W3"))
+
+```
+
+# 都道府県別の魚油・魚粉原料処理量中のラウンドと残滓の割合をプロット
+## 北海道
+```{r}
+
+p3 <- dplyr::filter(Round, prefecture_ja == "北海道") %>% group_by(year)
+p3$year <- as.factor(p3$year)
+
+ggplot(p3,aes(x=year, y=volume_1000t,fill=category)) +
+	theme_ipsum() +
+	geom_bar(stat = "identity",position = "fill") +
+	labs(x = "年", y = "割合 (%)", title = "北海道") +
+	scale_y_continuous(labels = scales::percent) +
+	scale_x_discrete(breaks = seq(2000,2020,by=5)) +
+	theme(text = element_text(family = "HiraKakuPro-W3")) 
+
+```
+
+# 都道府県別の魚油・魚粉原料処理量中のラウンドと残滓の割合をプロット
+## 青森
+```{r}
+
+p4 <- dplyr::filter(Round, prefecture_ja == "青森県") %>% group_by(year)
+p4$year <- as.factor(p4$year)
+
+ggplot(p4,aes(x=year, y=volume_1000t,fill=category)) +
+	theme_ipsum() +
+	geom_bar(stat = "identity",position = "fill") +
+	labs(x = "年", y = "割合 (%)", title = "青森") +
+	scale_y_continuous(labels = scales::percent) +
+	scale_x_discrete(breaks = seq(2000,2020,by=5)) +
+	theme(text = element_text(family = "HiraKakuPro-W3")) 
+
+```
+
+
+# 都道府県別の魚油・魚粉原料処理量中のラウンドと残滓の割合をプロット
+## 宮城
+```{r}
+
+p5 <- dplyr::filter(Round, prefecture_ja == "宮城県") %>% group_by(year)
+p5$year <- as.factor(p5$year)
+
+ggplot(p5,aes(x=year, y=volume_1000t,fill=category)) +
+	theme_ipsum() +
+	geom_bar(stat = "identity",position = "fill") +
+	labs(x = "年", y = "割合 (%)", title = "宮城") +
+	scale_y_continuous(labels = scales::percent) +
+	scale_x_discrete(breaks = seq(2000,2020,by=5)) +
+	theme(text = element_text(family = "HiraKakuPro-W3")) 
+	
+```
+
+# 都道府県別の魚油・魚粉原料処理量中のラウンドと残滓の割合をプロット
+## 鳥取
+```{r}
+p6 <- dplyr::filter(Round, prefecture_ja == "鳥取県") %>% group_by(year)
+p6$year <- as.factor(p6$year)
+
+ggplot(p6,aes(x=year, y=volume_1000t,fill=category)) +
+	theme_ipsum() +
+	geom_bar(stat = "identity",position = "fill") +
+	labs(x = "年", y = "割合 (%)", title = "鳥取") +
+	scale_y_continuous(labels = scales::percent) +
+	scale_x_discrete(breaks = seq(2000,2020,by=5)) +
+	theme(text = element_text(family = "HiraKakuPro-W3")) 
+```
+
+# 都道府県別の魚油・魚粉原料処理量中のラウンドと残滓の割合をプロット
+## 鹿児島
+```{r}
+p7 <- dplyr::filter(Round, prefecture_ja == "鹿児島県") %>% group_by(year)
+p7$year <- as.factor(p7$year)
+
+ggplot(p7,aes(x=year, y=volume_1000t,fill=category)) +
+	theme_ipsum() +
+	geom_bar(stat = "identity",position = "fill") +
+	labs(x = "年", y = "割合 (%)", title = "鹿児島") +
+	scale_y_continuous(labels = scales::percent) +
+	scale_x_discrete(breaks = seq(2000,2020,by=5)) +
+	theme(text = element_text(family = "HiraKakuPro-W3")) 
+```
+
+# 都道府県別の魚油・魚粉原料処理量中のラウンドと残滓の割合をプロット
+## 千葉
+```{r}
+p8 <- dplyr::filter(Round, prefecture_ja == "千葉県") %>% group_by(year)
+p8$year <- as.factor(p8$year)
+
+ggplot(p8,aes(x=year, y=volume_1000t ,fill=category)) +
+	theme_ipsum() +
+	geom_bar(stat = "identity",position = "fill") +
+	labs(x = "年", y = "割合 (%)", title = "千葉") +
+	scale_y_continuous(labels = scales::percent) +
+	scale_x_discrete(breaks = seq(2000,2020,by=5)) +
+	theme(text = element_text(family = "HiraKakuPro-W3")) 
+```
+
+# 岩手(元データでも2012,2013はデータなし)
+```{r}
+p8 <- dplyr::filter(Round, prefecture_ja == "岩手県") %>% group_by(year)
+p8$year <- as.factor(p8$year)
+
+ggplot(p8,aes(x=year, y=volume_1000t ,fill=category)) +
+	theme_ipsum() +
+	geom_bar(stat = "identity",position = "fill") +
+	labs(x = "年", y = "割合 (%)", title = "岩手") +
+	scale_y_continuous(labels = scales::percent) +
+	scale_x_discrete(breaks = seq(2000,2020,by=5)) +
+	theme(text = element_text(family = "HiraKakuPro-W3")) 
+```
+
+
+```{r}
+# 必要なライブラリをロード
+library(ggplot2)
+
+# 日本らしい15色のカラーパレットを作成
+japanese_colors <- c(
+  "#F14E4E", "#A22041", "#8C4B30", "#F76E11", "#7BC245", 
+  "#007C7B", "#5555E9", "#D7003A", "#B5B4DA", "#8A6BBE", 
+  "#C77A1A", "#A1A3A6", "#9B8EBB", "#3E2E23", "#00A3AF"
+)
+
+# データフレームを作成（仮のデータ）
+data <- data.frame(
+  category = paste("Category", 1:15),
+  value = sample(10:100, 15, replace = TRUE)
+)
+
+# ggplot2で棒グラフを作成
+ggplot(data, aes(x = category, y = value, fill = category)) +
+  geom_bar(stat = "identity") +
+  scale_fill_manual(values = japanese_colors) +
+  labs(title = "日本らしい伝統色を使った棒グラフ", x = "カテゴリー", y = "値") +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    text = element_text(family = "HiraKakuPro-W3")  # 日本語フォントを指定
+  )
+
+```
+
+
